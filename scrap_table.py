@@ -7,7 +7,7 @@ import traceback
 
 def lambda_handler(event, context):
     try:
-        url = "https://sgonorte.bomberosperu.gob.pe/24horas/?criterio=/"
+        url = "https://ultimosismo.igp.gob.pe/ultimo-sismo/sismos-reportados"
         response = requests.get(url)
         if response.status_code != 200:
             return {
