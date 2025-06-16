@@ -1,4 +1,4 @@
-import requests
+from requests_html import HTMLSession
 from bs4 import BeautifulSoup
 import boto3
 import uuid
@@ -7,29 +7,20 @@ import traceback
 
 def lambda_handler(event, context):
     try:
+        session = HTMLSession()
         url = "https://ultimosismo.igp.gob.pe/ultimo-sismo/sismos-reportados"
-        response = requests.get(url)
-        if response.status_code != 200:
-            return {
-                'statusCode': response.status_code,
-                'body': json.dumps({'error': 'No se pudo acceder a la página'})
-            }
+        
+        resp = session.get(url)
+        resp.html.render(timeout=20, sleep=2)  # Ejecuta el JS
 
-        soup = BeautifulSoup(response.content, 'html.parser')
+        soup = BeautifulSoup(resp.html.html, 'html.parser')
         table = soup.find('table')
         if not table:
-            return {
-                'statusCode': 404,
-                'body': json.dumps({'error': 'No se encontró la tabla'})
-            }
+            return {'statusCode': 404, 'body': json.dumps({'error': 'No se encontró la tabla'})}
 
-        headers = [header.text.strip() for header in table.find_all('th')]
+        headers = [th.text.strip() for th in table.find_all('th')]
         if not headers:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'La tabla no tiene encabezados'})
-            }
-
+            return {'statusCode': 400, 'body': json.dumps({'error': 'La tabla no tiene encabezados'})}
         rows = []
         for tr in table.find_all('tr')[1:]:
             cells = tr.find_all('td')
